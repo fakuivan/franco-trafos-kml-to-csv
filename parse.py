@@ -16,13 +16,13 @@ class Trafo(NamedTuple):
 
     @classmethod
     def from_xml(cls, xml: objectify.ObjectifiedElement):
-        *coords, = map(float, str(xml.Point.coordinates).split(",")[:2])
+        long, lat, _ = map(float, str(xml.Point.coordinates).split(","))
         return cls(
             getattr(xml, "name", ""),
             getattr(xml, "ID_Trafo", ""),
             getattr(xml, "ID_Monohilo", ""),
-            coords[1],
-            coords[0]
+            lat,
+            long
         )
 
 def main(kml_file: typer.FileText):
