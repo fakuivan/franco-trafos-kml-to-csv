@@ -7,15 +7,19 @@ import typer
 import csv
 from sys import stdout
 
-T = TypeVar("T")
-def getattr_chain(obj, default: T, attr_name: str, *rest_attr: str) -> T | Any:
-    if not (hasattr(obj, attr_name)):
-        return default
-    attr = getattr(obj, attr_name)
-    if len(rest_attr) > 0:
-        getattr_chain(attr, default, *rest_attr)
-    return attr
-
+def process_schema_data(xml: objectify.ObjectifiedElement) -> tuple[str, str]:
+    extended_data = getattr(xml, "ExtendedData")
+    if extended_data is None:
+        return ("", "")
+    schema_data: objectify.ObjectifiedDataElement | None = getattr(
+        extended_data, "SchemaData")
+    if schema_data is None:
+        return ("", "")
+    schema_data, = schema_data.iterchildren(None)
+    if schema_data is None:
+        return ("", "")
+    trafo, monohilo, _, _ = schema_data.iterchildren(None)
+    return tuple(map(str, [trafo, monohilo]))
 
 class Trafo(NamedTuple):
     nombre_pot: str
@@ -27,8 +31,7 @@ class Trafo(NamedTuple):
     @classmethod
     def from_xml(cls, xml: objectify.ObjectifiedElement):
         long, lat, _ = map(float, str(xml.Point.coordinates).split(","))
-        schema_data = getattr_chain(xml, None, "ExtendedData", "SchemaData")
-        trafo, monohilo = ("", "") if schema_data is None else [*schema_data.getiterator()][2:4]
+        trafo, monohilo = process_schema_data(xml)
         return cls(
             getattr(xml, "name", ""),
             trafo,
