@@ -8,17 +8,16 @@ import csv
 from sys import stdout
 
 def process_schema_data(xml: objectify.ObjectifiedElement) -> tuple[str, str]:
-    extended_data = getattr(xml, "ExtendedData")
+    extended_data = getattr(xml, "ExtendedData", None)
     if extended_data is None:
         return ("", "")
     schema_data: objectify.ObjectifiedDataElement | None = getattr(
-        extended_data, "SchemaData")
+        extended_data, "SchemaData", None)
+    
     if schema_data is None:
         return ("", "")
-    schema_data, = schema_data.iterchildren(None)
-    if schema_data is None:
-        return ("", "")
-    trafo, monohilo, _, _ = schema_data.iterchildren(None)
+    # Some of these have different schemas, TODO check for that
+    trafo, monohilo, _, _, *_ = schema_data.iterchildren(None)
     return tuple(map(str, [trafo, monohilo]))
 
 class Trafo(NamedTuple):
